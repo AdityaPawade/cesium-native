@@ -84,7 +84,6 @@ function(configure_cesium_library targetName)
         target_compile_options(${targetName} PRIVATE /W4 /WX /wd4201 /bigobj)
     else()
         target_compile_options(${targetName} PRIVATE -Werror -Wall -Wextra -Wconversion -Wpedantic -Wshadow -Wsign-conversion)
-        target_compile_options(${targetName} PRIVATE -Wno-dangling-reference)
     endif()
 
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13)
@@ -228,6 +227,8 @@ install(TARGETS expected-lite)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/expected-lite/include/nonstd TYPE INCLUDE)
 
 install(TARGETS meshoptimizer)
+
+install(TARGETS ${CESIUM_NATIVE_DRACO_LIBRARY} EXPORT CesiumExtern)
 
 install(EXPORT CesiumExports
   FILE cesium-nativeTargets.cmake
