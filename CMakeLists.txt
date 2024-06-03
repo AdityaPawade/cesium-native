@@ -6,6 +6,30 @@ project(cesium-native
     LANGUAGES CXX C
 )
 
+if(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER AND NOT DEFINED CMAKE_CXX_COMPILER_LAUNCHER)
+    find_program(CCACHE_FOUND ccache)
+    find_program(SCCACHE_FOUND sccache)
+    if (SCCACHE_FOUND)
+        message("setting SCCACHE to ${SCCACHE_FOUND}")
+        set(CMAKE_C_COMPILER_LAUNCHER ${SCCACHE_FOUND})
+        set(CMAKE_CXX_COMPILER_LAUNCHER ${SCCACHE_FOUND})
+    elseif(CCACHE_FOUND)
+        message("setting CCACHE to ${CCACHE_FOUND}")
+        set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_FOUND})
+        set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_FOUND})
+    endif()
+endif()
+
+# ccache/sccache only works with /Z7, not /Zi, so tweak the Debug and RelWithDebInfo build flags in the presence of a compiler cache
+if(MSVC AND (DEFINED CMAKE_C_COMPILER_LAUNCHER))
+    message(DEBUG "Setting MSVC flags to /Z7 for ccache compatibility.  Current flags: ${CMAKE_CXX_FLAGS_DEBUG}")
+    string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+    string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+    string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+    string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+    message(DEBUG "New flags: ${CMAKE_CXX_FLAGS_DEBUG}")
+endif()
+
 option(PRIVATE_CESIUM_SQLITE "ON to rename SQLite symbols to cesium_sqlite3_* so they won't conflict with other SQLite implemenentations" OFF)
 option(CESIUM_TRACING_ENABLED "Whether to enable the Cesium performance tracing framework (CESIUM_TRACE_* macros)." OFF)
 option(CESIUM_COVERAGE_ENABLED "Whether to enable code coverage" OFF)
@@ -41,8 +65,8 @@ if (NOT DEFINED GLOB_USE_CONFIGURE_DEPENDS)
     )
 endif()
 
-set(CESIUM_DEBUG_POSTFIX "d")
-set(CESIUM_RELEASE_POSTFIX "")
+set(CESIUM_DEBUG_POSTFIX "d" CACHE STRING "debug postfix for cesium native")
+set(CESIUM_RELEASE_POSTFIX "" CACHE STRING "release postfix for cesium native")
 
 set(CMAKE_DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
 set(CMAKE_RELEASE_POSTFIX ${CESIUM_RELEASE_POSTFIX})
@@ -136,8 +160,8 @@ endfunction()
 add_subdirectory(extern)
 
 # These libraries override the debug postfix, so re-override it.
-set_target_properties(spdlog PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
-set_target_properties(tinyxml2 PROPERTIES DEBUG_POSTFIX ${CESIUM_DEBUG_POSTFIX})
+set_target_properties(spdlog PROPERTIES DEBUG_POSTFIX "${CESIUM_DEBUG_POSTFIX}")
+set_target_properties(tinyxml2 PROPERTIES DEBUG_POSTFIX "${CESIUM_DEBUG_POSTFIX}")
 
 if(CESIUM_SPDLOG_HEADER_ONLY)
   install(TARGETS spdlog_header_only EXPORT CesiumExtern)
@@ -165,6 +189,7 @@ add_subdirectory(Cesium3DTilesContent)
 add_subdirectory(CesiumRasterOverlays)
 add_subdirectory(Cesium3DTilesSelection)
 add_subdirectory(CesiumIonClient)
+add_subdirectory(CesiumQuantizedMeshTerrain)
 
 # Private Targets
 if (CESIUM_TESTS_ENABLED)
@@ -207,11 +232,11 @@ if(NOT ${GSL_INSTALL})
   install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extern/GSL/include/gsl TYPE INCLUDE)
 endif()
 
-# ktx_read's PUBLIC_HEADER has paths relative to its own directory, so the install line below will fail.
-# We could fix that, but we don't need the KTX public headers installed anyway (they should be considered
-# private to cesium-native), so just set the PUBLIC_HEADER to an empty string.
-set_target_properties(ktx_read PROPERTIES PUBLIC_HEADER "")
-install(TARGETS ktx_read EXPORT CesiumExtern)
+# Install with framework destination specified (needed for iOS)
+install(TARGETS ktx
+		FRAMEWORK
+			DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                EXPORT CesiumExtern)
 
 install(TARGETS webpdecoder)
 

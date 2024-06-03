@@ -20,6 +20,23 @@ getPositionAccessorView(const Model& model, const MeshPrimitive& primitive) {
   return PositionAccessorType(model, *pAccessor);
 }
 
+NormalAccessorType
+getNormalAccessorView(const Model& model, const MeshPrimitive& primitive) {
+  auto normalAttribute = primitive.attributes.find("NORMAL");
+  if (normalAttribute == primitive.attributes.end()) {
+    return NormalAccessorType();
+  }
+
+  const Accessor* pAccessor =
+      model.getSafe<Accessor>(&model.accessors, normalAttribute->second);
+  if (!pAccessor || pAccessor->type != Accessor::Type::VEC3 ||
+      pAccessor->componentType != Accessor::ComponentType::FLOAT) {
+    return NormalAccessorType();
+  }
+
+  return NormalAccessorType(model, *pAccessor);
+}
+
 FeatureIdAccessorType getFeatureIdAccessorView(
     const Model& model,
     const MeshPrimitive& primitive,
@@ -116,4 +133,38 @@ TexCoordAccessorType getTexCoordAccessorView(
   }
 }
 
+QuaternionAccessorType
+getQuaternionAccessorView(const Model& model, const Accessor* pAccessor) {
+  if (!pAccessor) {
+    return QuaternionAccessorType();
+  }
+  switch (pAccessor->componentType) {
+  case Accessor::ComponentType::BYTE:
+    return AccessorView<AccessorTypes::VEC4<int8_t>>(model, *pAccessor);
+    [[fallthrough]];
+  case Accessor::ComponentType::UNSIGNED_BYTE:
+    return AccessorView<AccessorTypes::VEC4<uint8_t>>(model, *pAccessor);
+    [[fallthrough]];
+  case Accessor::ComponentType::SHORT:
+    return AccessorView<AccessorTypes::VEC4<int16_t>>(model, *pAccessor);
+    [[fallthrough]];
+  case Accessor::ComponentType::UNSIGNED_SHORT:
+    return AccessorView<AccessorTypes::VEC4<uint16_t>>(model, *pAccessor);
+    [[fallthrough]];
+  case Accessor::ComponentType::FLOAT:
+    return AccessorView<AccessorTypes::VEC4<float>>(model, *pAccessor);
+  default:
+    return QuaternionAccessorType();
+  }
+}
+
+QuaternionAccessorType
+getQuaternionAccessorView(const Model& model, int32_t accessorIndex) {
+  const Accessor* pAccessor =
+      model.getSafe<Accessor>(&model.accessors, accessorIndex);
+  if (!pAccessor || pAccessor->type != Accessor::Type::VEC4) {
+    return QuaternionAccessorType();
+  }
+  return getQuaternionAccessorView(model, pAccessor);
+}
 } // namespace CesiumGltf

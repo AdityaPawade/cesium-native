@@ -26,7 +26,8 @@ if(IOS)
   set(CMAKE_XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "12.0" CACHE STRING "iOS Deployment Target")
 endif()
 
-add_subdirectory(KTX-Software EXCLUDE_FROM_ALL)
+set(KTX_FEATURE_TOOLS off)
+add_subdirectory(KTX-Software)
 
 option(WEBP_BUILD_ANIM_UTILS "" off)
 option(WEBP_BUILD_CWEBP "" off)
@@ -88,10 +89,12 @@ make_interface_directories_system(tinyxml2)
 add_subdirectory(asyncplusplus EXCLUDE_FROM_ALL)
 make_interface_directories_system(Async++)
 
-set(SPDLOG_BUILD_TESTING OFF CACHE INTERNAL "Disable SPDLOG Testing")
-add_subdirectory(spdlog EXCLUDE_FROM_ALL)
-target_compile_definitions(spdlog PUBLIC _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
-make_interface_directories_system(spdlog)
+if (NOT TARGET spdlog::spdlog)
+    set(SPDLOG_BUILD_TESTING OFF CACHE INTERNAL "Disable SPDLOG Testing")
+    add_subdirectory(spdlog EXCLUDE_FROM_ALL)
+    target_compile_definitions(spdlog PUBLIC _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
+    make_interface_directories_system(spdlog)
+endif()
 
 if (NOT TARGET sqlite3)
   add_subdirectory(sqlite3 EXCLUDE_FROM_ALL)
@@ -136,6 +139,10 @@ if (MSVC)
   target_compile_options(s2geometry PRIVATE "/J" "/wd4127" "/wd4996")
   target_compile_definitions(s2geometry PRIVATE NOMINMAX _USE_MATH_DEFINES)
 endif()
+
+# S2 embeds Abseil, which may be used elsewhere as well.
+# So force it into an alternative namespace using the preprocessor.
+target_compile_definitions(s2geometry PRIVATE absl=cesium_s2geometry_absl)
 
 set(HTTPLIB_USE_BROTLI_IF_AVAILABLE OFF CACHE BOOL "Don't use Brotli")
 set(HTTPLIB_USE_ZLIB_IF_AVAILABLE OFF CACHE BOOL "Don't use Zlib")
