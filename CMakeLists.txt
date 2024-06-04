@@ -235,8 +235,7 @@ endif()
 # Install with framework destination specified (needed for iOS)
 install(TARGETS ktx
 		FRAMEWORK
-			DESTINATION ${CMAKE_INSTALL_LIBDIR}
-                EXPORT CesiumExtern)
+			DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install(TARGETS webpdecoder)
 
