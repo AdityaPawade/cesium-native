@@ -36,15 +36,15 @@ target_sources(
     PRIVATE
         ${CESIUM_QUANTIZED_MESH_TERRAIN_SOURCES}
         ${CESIUM_QUANTIZED_MESH_TERRAIN_HEADERS}
-    PUBLIC
         ${CESIUM_QUANTIZED_MESH_TERRAIN_PUBLIC_HEADERS}
 )
 
 target_include_directories(
     CesiumQuantizedMeshTerrain
     SYSTEM PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/include
-        ${CMAKE_CURRENT_LIST_DIR}/generated/include
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/generated/include>
+        $<INSTALL_INTERFACE:include>
     PRIVATE
         ${CESIUM_NATIVE_RAPIDJSON_INCLUDE_DIR}
         ${CMAKE_CURRENT_LIST_DIR}/src

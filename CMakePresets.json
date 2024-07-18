@@ -1,0 +1,31 @@
+{
+    "version": 2,
+    "configurePresets": [
+        {
+            "name": "default",
+            "displayName": "vcpkg VS17",
+            "generator": "Visual Studio 17",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl.exe",
+                "CMAKE_CXX_COMPILER": "cl.exe",
+                "CMAKE_BUILD_TYPE": "Release",
+                "CESIUM_SPDLOG_HEADER_ONLY": "OFF",
+                "GSL_INSTALL": "ON",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/build/install",
+                "BUILD_TESTING": {
+                    "type": "BOOL",
+                    "value": "OFF"
+                },
+                "LOCAL_SKIP_TEST": "TRUE",
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "value": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                    "type": "FILEPATH"
+                },
+                "VCPKG_TARGET_TRIPLET": "x64-windows"
+            },
+            "environment": {
+            }
+        }
+    ]
+}
